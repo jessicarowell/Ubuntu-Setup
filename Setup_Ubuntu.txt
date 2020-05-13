@@ -1,0 +1,233 @@
+###################### CORE UTILS #############################
+
+# Set up core Ubuntu system
+
+mkdir bin src data lib .local trash
+
+sudo apt-get update
+sudo apt-get upgrade
+  
+sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
+libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl \
+git-core libyaml-dev sqlite3 libxslt1-dev python-software-properties 
+
+sudo apt-get install -y libxml2-dev libcurl4-openssl-dev libargtable2-dev
+sudo apt-get install -y g++
+sudo apt-get install -y libgd3 libgd-dev libdb-dev libsz2
+
+sudo apt-get install tmux
+
+# Set up SSH (Have to remove and re-install)
+sudo apt remove openssh-server
+sudo apt-get install openssh-server
+sudo vi /etc/ssh/sshd_config
+    # Change PasswordAuthentication to yes
+    # Add your login user to the bottom of the file by using this command: AllowUsers yourusername
+sudo service ssh start
+sudo service ssh --full-restart
+
+
+###################### PERL ###############################
+
+
+# Install Perl and related tools (important for regex lookahead syntax)
+curl -L https://install.perlbrew.pl -o install.perlbrew.pl 
+cat install.perlbrew.pl | bash
+echo 'source ~/perl5/perlbrew/etc/bashrc' >>~/.bashrc
+sudo apt install cpanminus
+cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
+perlbrew available
+perlbrew install-patchperl
+perlbrew --notest install perl-5.30.2
+curl -L -k https://cpanmin.us | perl - App::cpanminus
+
+# Set up local lib
+echo 'eval $(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)' >>~/.bashrc
+. ~/.bashrc
+
+# Install some modules that are useful
+cpanm inc::Module::Install
+cpanm Getopt::Euclid
+cpanm List::Util
+cpanm Math::Random::MT
+
+
+# Install Kensho kit *warning: this takes 6-8 hours)
+cpanm --interactive Task::Kensho
+
+# Install Bioperl - obviously (there are dependencies not being maintained after Perl 5.25.2)
+git clone https://github.com/bioperl/bioperl-live.git
+cd bioperl-live
+
+# First install dependency packages (can probably just do `cpanm DBI` etc.)
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(DBI)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(DBD::SQLite)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(LWP::UserAgent)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(XML::Twig)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(XML::Parser::PerlSAX)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(XML::Simple)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(XML::LibXML)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(XML::SAX::Writer)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(XML::Writer)'
+cpanm XML::DOM::XPath --force
+# Makefile:819: recipe for target 'test_dynamic' failed: uses encoding.pm which is no longer supported after Perl 5.25.3:
+# on line 10 of t/test_non_ascii.t change `use encoding 'utf8';` to `use 'utf8';` (doesn't work: https://stackoverflow.com/questions/47966512/error-installing-xmldomxpath)
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(Graph::Directed)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(Convert::Binary::C)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(HTML::TableExtract)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(IO::Scalar)'
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(Bio::Phylo)'
+# Warning: Bio::Phylo takes a few hours
+perl -MCPAN -Mlocal::lib -e 'CPAN::install(Bio::SeqIO)'
+
+
+# Then build Bioperl using Dist::Zilla
+cpanm IO::Socket::SSL
+cpanm LWP::Protocol::https
+cpanm CPAN::Uploader
+cpanm Dist::Zilla --force
+cpanm Dist::Zilla::PluginBundle::BioPerl --force
+dzil authordeps --missing | cpanm
+dzil install
+cpanm --notest XML::DOM::XPath
+cpanm DB_File --force
+
+# Test Bioperl installation (should get a version number after installing version pkg)
+cpanm Bio::Root::Version --force
+perl -MBio::Root::Version -le 'print $Bio::Root::Version::VERSION'
+ 
+  
+############################ R ############################
+
+# Install R and related tools
+sudo apt-get install r-base-core
+
+# Launch R and install libraries
+install.packages('devtools') 
+# devtools, ggplot2, plyr, reshape2, ConfigParser
+# quick: renv, tinytex, yaml, argparse, vitae, readxl, lubridate, here, glue
+# long: tidyverse, scholar, 
+# pROC (vs 1.15.0)
+
+# Get LaTeX if not installed locally
+tinytex::install_tinytex()
+
+# RStudio Server (https://rstudio.com/products/rstudio/download-server/) 
+sudo apt-get install gdebi-core
+wget https://download2.rstudio.org/server/trusty/amd64/rstudio-server-1.2.5042-amd64.deb
+sudo gdebi rstudio-server-1.2.5042-amd64.deb
+
+
+###################### PYTHON ##########################
+
+# Install python (version 2 was automatically included in Win Subsystem, install v3 after Anaconda3)
+
+# Install Anaconda (get the latest distribution here: https://www.anaconda.com/distribution/)
+wget https://repo.anaconda.com/archive/Anaconda3-2019.07-Linux-x86_64.sh
+Anaconda3-2019.07-Linux-x86_64.sh
+source ~/anaconda3/bin/activate
+conda update --all 
+# can run `jupyter notebook` and paste the link in browser to run a Jupyter Notebook (it gives some errors?)
+
+# Example (don't install this way? use pyenv?)
+#conda install python=3.6
+
+# Install pyenv
+curl -k https://pyenv.run | bash
+echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >>~/.bashrc
+echo 'eval "$(pyenv init -)"' >>~/.bashrc
+echo 'eval "$(pyenv virtualenv-init -)""' >>~/.bashrc    
+    # (I actually added these by hand, with a header)
+exec "$SHELL"
+
+
+# Install python3 (whatever latest stable version is)
+pyenv install --list | grep " 3\.[678]"
+pyenv install -v 3.8.2
+python -m test
+
+
+# Install Biopython
+pip install biopython
+
+
+##################### RUBY ######################
+
+# Install Ruby
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+exec $SHELL
+
+git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+exec $SHELL
+
+# Note that ruby-build doesn't check for dependencies, but they should have been installed at top
+rbenv install 2.7.1
+rbenv global 2.7.1
+ruby -v
+
+gem install bundler
+rbenv rehash
+
+# Install packages (these are required by ROCker)
+gem install nokogiri
+gem install rest-client
+gem install bio-rocker
+  
+############### OTHER TOOLS ##################
+
+# Pandoc
+
+
+# Diamond (get latest version)
+wget http://github.com/bbuchfink/diamond/releases/download/v0.9.30/diamond-linux64.tar.gz
+tar xzf diamond-linux64.tar.gz
+mv diamond ../bin/
+
+# Grinder (get latest version)
+wget https://downloads.sourceforge.net/project/biogrinder/biogrinder/Grinder-0.5.4/Grinder-0.5.4.tar.gz
+tar xzf Grinder-0.5.4.tar.gz
+cd Grinder-0.5.4/
+perl Makefile.PL
+make
+make install
+
+# BLAST tools (get latest version)
+wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.10.0+-x64-linux.tar.gz
+wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.10.0+-x64-linux.tar.gz.md5
+md5sum -c ncbi-blast-2.10.0+-x64-linux.tar.gz.md5
+tar xzf  ncbi-blast-2.10.0+-x64-linux.tar.gz
+cd ncbi-blast-2.10.0+/
+cd bin/
+cp * ../../../bin/
+
+# MUSCLE and ClustalOmega
+sudo apt-get install -y muscle
+sudo apt-get install -y clustalo
+  
+# Samtools
+wget https://github.com/samtools/samtools/releases/download/1.10/samtools-1.10.tar.bz2 
+    # or https://sourceforge.net/projects/samtools/files/samtools/1.10/samtools-1.10.tar.bz2/
+tar xjf samtools-1.10.tar.bz2/
+cd samtools-1.10
+./configure --prefix=$HOME/.local
+# (run `make clean` then just the `make` line w/flags to recompile if you have already compiled Samtools)
+make CXXFLAGS=-fPIC CFLAGS=-fPIC CPPFLAGS=-fPIC
+make install
+
+# Samtools if you want to use it with BioPerl
+# Bio::DB::Sam no longer maintained. Use Bio::DB::HTS instead, which requires independent version of htslib
+wget https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2
+tar xjf htslib-1.10.2.tar.bz2
+cd htslib-1.10.2
+./configure --prefix=$HOME/.local
+make CXXFLAGS=-fPIC CFLAGS=-fPIC CPPFLAGS=-fPIC
+make install
+## IMPORTANT: if you install htslib manually, you have to compile the BioPerl module manually (to point it to the header file)
+cpanm Bio::DB::HTS
+
+
+# Also see https://sourceforge.net/projects/samtools/files/samtools/1.10.2/bcftools-1.10.2.tar.bz2/ 
