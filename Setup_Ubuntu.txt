@@ -149,7 +149,7 @@ sudo gdebi rstudio-server-1.2.5042-amd64.deb
 
 # Install python (version 2 was automatically included in Win Subsystem, install v3 after Anaconda3)
 
-# Install Anaconda (get the latest distribution here: https://www.anaconda.com/distribution/)
+# Install Anaconda (get the latest distribution here: https://repo.anaconda.com/archive/)
 wget https://repo.anaconda.com/archive/Anaconda3-2019.07-Linux-x86_64.sh
 Anaconda3-2019.07-Linux-x86_64.sh
 source ~/anaconda3/bin/activate
