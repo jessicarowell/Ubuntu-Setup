@@ -205,6 +205,28 @@ gem install bio-rocker
   
 ############### OTHER TOOLS ##################
 
+# PostgreSQL
+sudo apt install postgresql postgresql-contrib
+psql --version
+
+# To use with pgAdmin, you have to set a password for default user
+sudo service postgresql start # connect to server
+sudo -u postgres psql postgres # log on as user 'postgres' to the 'postgres' DB (no pwd needed)
+	# Change the pwd for the default user to 'postgres'
+	postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
+# Now you can connect to pgAdmin, follow these steps:
+# https://stackoverflow.com/questions/45707319/pgadmin-on-windows-10-with-postgres-when-installed-via-bash-on-ubuntu-on-windows/54192456#54192456
+
+# Basic commands
+createdb -h localhost -p 5432 -U postgres aquaria # create the DB 'aquaria' under postgres user
+sudo -u postgres psql # connect to service as user postgres, open psql shell
+	# \l to list all your databases
+	# \q  to exit psql shell
+sudo service postgresql stop # disconnect from server
+sudo service postgresql status # check server status
+
+
+
 # Pandoc: https://packages.ubuntu.com/search?keywords=pandoc
 sudo apt-get install pandoc
 
